@@ -20,8 +20,13 @@
 * @package       LimeSurvey
 * @subpackage    Backend
 */
+require_once"bounce_driver.class.php";
+
+error_reporting(E_ALL);
 class tokens extends Survey_Common_Action
 {
+private $_bouncehandler;
+
 
     /**
     * Show token index page, handle token database
@@ -73,6 +78,7 @@ class tokens extends Survey_Common_Action
     */
     public function bounceprocessing($iSurveyId)
     {
+        if (!$this->_bouncehandler) {$this->_bouncehandler = new Bouncehandler(); }//rmast
         $iSurveyId = sanitize_int($iSurveyId);
         $bTokenExists = tableExists('{{tokens_' . $iSurveyId . '}}');
         if (!$bTokenExists) //If no tokens table exists
@@ -177,7 +183,7 @@ class tokens extends Survey_Common_Action
                 case "TLS":
                     $flags.="/tls/novalidate-cert";
                     break;
-            }
+          }
 
             $mbox = @imap_open('{' . $hostname . $flags . '}INBOX', $username, $pass);
             if ($mbox)
@@ -191,6 +197,9 @@ class tokens extends Survey_Common_Action
                         $aMessageIDs=array();
                     }
                     foreach ($aMessageIDs as $sMessageID) {
+                        $robertmessage = imap_fetchbody($mbox, $sMessageID, 1, FT_UID && FT_PEEK ); // Don't mark messages as read
+        $multiArray = $this->_bouncehandler->get_the_facts($robertmessage);
+        print_r($multiArray);
                         $header = explode("\r\n", imap_body($mbox, $sMessageID, FT_UID && FT_PEEK )); // Don't mark messages as read
 
                         foreach ($header as $item)
